@@ -1,5 +1,7 @@
 # PTIS public demo
 
+**Live site:** https://abhishekroyshandilya.github.io/ptis-demo/ · **PTIS source:** https://github.com/AbhishekRoyShandilya/ptis
+
 A live, static website that runs the **public PTIS strategy engine** every weekday evening on **real NSE end-of-day
 prices**, with a textbook strategy taught to it as a template. Anyone opening the link can see each part working:
 the market data, the strategy template, the engine's ranked scan with a condition-by-condition checklist, and a
