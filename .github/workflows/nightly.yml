@@ -1,0 +1,73 @@
+name: nightly
+
+on:
+  schedule:
+    - cron: "0 14 * * 1-5"      # 19:30 IST, after NSE publishes the day's bhavcopy
+  workflow_dispatch: {}
+
+permissions:
+  contents: write                # commit newly downloaded sessions
+  pages: write
+  id-token: write
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      TZ: Asia/Kolkata
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install -r requirements.txt
+
+      - name: Build site data (download new sessions, run the PTIS engine)
+        run: python -m demo.build
+
+      - name: Tests (isolation, corporate actions, truncation / no look-ahead)
+        run: python -m pytest tests -q
+
+      - name: Commit new sessions
+        run: |
+          git config user.name "ptis-demo-bot"
+          git config user.email "ptis-demo-bot@users.noreply.github.com"
+          git add data/eod data/universe_nifty50.csv
+          git diff --cached --quiet || git commit -m "data: sessions up to $(date +%F)"
+          git push
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Build website
+        working-directory: web
+        run: npm ci && npm run build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+      - name: Fail if the data is stale
+        run: python -m demo.check_fresh
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

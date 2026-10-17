@@ -1,0 +1,12 @@
+# Demo pipeline: the subset of PTIS's stack that the nightly build needs (versions match PTIS's tested set)
+pandas==2.3.3
+numpy>=2.0,<2.4
+pyarrow>=15.0
+pyyaml==6.0.1
+pydantic==2.5.3
+pydantic-settings==2.1.0
+sqlalchemy==2.0.25
+requests>=2.31
+python-dotenv==1.0.0
+pytz==2024.1
+pytest>=8.0

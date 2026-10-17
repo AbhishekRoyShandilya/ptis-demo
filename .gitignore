@@ -1,0 +1,15 @@
+# environments and builds
+.venv/
+__pycache__/
+.pytest_cache/
+web/node_modules/
+web/dist/
+
+# generated every night (the site's JSON and the derived panel)
+web/public/data/
+data/panel.parquet
+data/adjustments.json
+
+# never present in this repo (the isolation guard refuses to run if they exist)
+.env
+.env.*

@@ -1,0 +1,72 @@
+# Demo strategy — a TEXTBOOK daily-bar EMA pullback, taught to PTIS as a template.
+# Illustrative only: not a recommendation, not the author's trading system. Every condition below is one the PTIS
+# condition engine really implements (strategy_engine/conditions/), so each scan shows a real checklist.
+strategy:
+  id: "demo_ema_pullback_daily"
+  name: "EMA Pullback (daily, demo)"
+  version: 1
+  description: >
+    In an established uptrend (price above the 50-day EMA, 20 EMA above 50 EMA), buy when price pulls back to the
+    20-day EMA. Stop below the recent swing low; take half at 1.5R, the rest at 3R; exit after 20 sessions.
+  author: "demo"
+  active: true
+
+  market_regime:
+    preferred: [trending_up, trending_bullish]
+    neutral: [breakout, range, ranging, low_volatility, low_vol, volatile, high_volatility]
+    avoid: [trending_down, trending_bearish]
+
+  entry:
+    direction: long
+    confirmations:
+      - type: ema_trend
+        required: true
+        weight: 2.0
+        description: "Close above the 50-day EMA (uptrend)"
+        params: {period: 50, price_above_ema_for_long: true}
+      - type: ema_alignment
+        required: true
+        weight: 2.0
+        description: "20-day EMA above 50-day EMA"
+        params: {fast_period: 20, slow_period: 50}
+      - type: pullback_to_level
+        required: true
+        weight: 2.0
+        description: "Close within half an ATR of the 20-day EMA"
+        params: {levels: [ema_20], tolerance_atr_pct: 0.5}
+      - type: higher_low_structure
+        required: false
+        weight: 1.0
+        description: "Recent swing lows rising"
+        params: {lookback_bars: 20}
+      - type: rejection_candle
+        required: false
+        weight: 1.0
+        description: "Hammer, pin bar or bullish engulfing on the pullback day"
+        params: {types: [hammer, pin_bar, bullish_engulfing]}
+    avoid_conditions:
+      - type: range_width_excessive
+        description: "Today's range above 2 ATR (news / shock day)"
+        params: {max_atr_multiple: 2.0}
+
+  exit:
+    stop_loss:
+      type: structure
+      params: {reference: swing_low, lookback_bars: 10, buffer_atr: 0.25}
+    targets:
+      - {r_multiple: 1.5, size_pct: 50}
+      - {r_multiple: 3.0, size_pct: 50}
+    trailing: {enabled: false}
+    time_exit:
+      enabled: true
+      max_duration_minutes: 7500      # 20 sessions x 375 minutes
+
+  risk:
+    max_risk_pct: 1.0
+    min_r_target: 1.5
+
+  invalidation: []
+  execution:
+    entry_type: market
+    preferred_timeframe: 1d
+    notes: "Signal on the close; enter at the next session's open."
